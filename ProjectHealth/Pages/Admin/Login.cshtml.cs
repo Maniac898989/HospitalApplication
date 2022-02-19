@@ -7,7 +7,7 @@ namespace ProjectHealth.Web.Pages.Admin
     public class LoginModel : PageModel
     {
         [BindProperty]
-        public Login Login { get; set; }
+        public Registration Login { get; set; }
 
         public void OnGet()
         {

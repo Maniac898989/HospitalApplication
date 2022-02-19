@@ -25,66 +25,80 @@ namespace ProjectHealth.Logic.Auth
             _iconfiguration = iconfiguration;
         }
 
-        public async Task<Result> Register(Login loginObject)
+        public async Task<Result> Register(Registration loginObject)
         {
-
-            var res = new Result();
-            //call passwordhashhmetthod
-            CreatePasswordhash(loginObject.Password, out byte[] PasswordHash, out byte[] PasswordSalt);
-
-            //write to database
-            AccessTable at = new AccessTable
+            try
             {
-                Firstname = loginObject.Firstname,
-                Lastname = loginObject.Lastname,
-                Email = loginObject.UserName,
-                Phone = loginObject.Phone,
-                DateCreated = DateTime.Now,
-                Passwordhash = PasswordHash,
-                PasswordSalt = PasswordSalt
-            };
+                var res = new Result();
+                //call passwordhashhmetthod
+                CreatePasswordhash(loginObject.Password, out byte[] PasswordHash, out byte[] PasswordSalt);
 
-            await _applicationDbContext.AddAsync(at);
-            await _applicationDbContext.SaveChangesAsync();
+                //write to database
+                AccessTable at = new AccessTable
+                {
+                    Firstname = loginObject.Firstname,
+                    Lastname = loginObject.Lastname,
+                    Email = loginObject.UserName,
+                    Phone = loginObject.Phone,
+                    DateCreated = DateTime.Now,
+                    Passwordhash = PasswordHash,
+                    PasswordSalt = PasswordSalt
+                };
 
-            res.Message = "info successfully added to the daatabase";
-            res.IsSuccessful = true;
+                await _applicationDbContext.AddAsync(at);
+                await _applicationDbContext.SaveChangesAsync();
 
-            return res;
+                res.Message = "Registration Successful";
+                res.IsSuccessful = true;
 
+                return res;
+            }
+            catch (Exception ex)
+            {
+
+                return new Result { Message = ex.Message, IsSuccessful = false };
+            }
         }
 
 
 
-        public async Task<Result> Login(Login loginObject)
+        public async Task<Result> Login(Login login)
         {
-
             var res = new Result();
-            //convert the key to bytes and call db to compare
-            var User = _applicationDbContext.AccessTable.Where(x => x.Email == loginObject.UserName).FirstOrDefault();
-            if (User == null)
+            try
             {
-                res.Message = "user not found";
-                res.IsSuccessful = false;
-                return res;
-            }
-            if (!Verifypassword(loginObject.Password, User.Passwordhash, User.PasswordSalt))
-            {
-                res.Message = "password incorrect";
-                res.IsSuccessful = false;
-                return res;
-            }
+                
+                //convert the key to bytes and call db to compare
+                var User = _applicationDbContext.AccessTable.Where(x => x.Email == login.Username).FirstOrDefault();
+                if (User == null)
+                {
+                    res.Message = "user not found";
+                    res.IsSuccessful = false;
+                    return res;
+                }
+                if (!Verifypassword(login.Password, User.Passwordhash, User.PasswordSalt))
+                {
+                    res.Message = "password incorrect";
+                    res.IsSuccessful = false;
+                    return res;
+                }
 
-            var token = CreateToken(User);
-            if (token != null)
-            {
-                res.Message = "Sucessfully logged in";
-                res.IsSuccessful = true;
-                res.ReturnedCode = token;
+                var token = CreateToken(User);
+                if (token != null)
+                {
+                    res.Message = "Sucessfully logged in";
+                    res.IsSuccessful = true;
+                    res.ReturnedCode = token;
+                    return res;
+                }
+
                 return res;
             }
-
-            return res;
+            catch (Exception ex)
+            {
+               return new Result { IsSuccessful = false, Message = ex.Message.ToString()};
+            }
+           
         }
 
         private bool Verifypassword(string password, byte[] PasswordHash, byte[] PasswordSalt)
@@ -101,7 +115,7 @@ namespace ProjectHealth.Logic.Auth
             using (var hmac = new HMACSHA512())
             {
                 PasswordSalt = hmac.Key;
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password.Trim()));
             }
         }
 
@@ -125,7 +139,6 @@ namespace ProjectHealth.Logic.Auth
             }
             catch (Exception ex)
             {
-
                 return ex.Message.ToString();
             }
         }

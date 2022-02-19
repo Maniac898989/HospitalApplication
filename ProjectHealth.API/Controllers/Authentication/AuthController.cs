@@ -18,18 +18,28 @@ namespace ProjectHealth.API.Controllers.Authentication
 
         [HttpPost]
         [Route("Register")]
-        public async Task<ActionResult> Register(Login Login)
+        public async Task<ActionResult> Register(Registration register)
         {
-            var login = await _authLogic.Register(Login);
-            return Ok(login);
+            var Register = await _authLogic.Register(register);
+            if (Register.IsSuccessful != true)
+            {
+                return BadRequest(Register.Message);
+            }
+
+            return Ok(Register.Message);
         }
 
         [HttpPost]
         [Route("Login")]
-        public async Task<ActionResult> Login(Login Login)
+        public async Task<ActionResult> Login(Login login)
         {
-            var login = await _authLogic.Login(Login);
-            return Ok(login);
+            var Login = await _authLogic.Login(login);
+            if(Login.IsSuccessful != true)
+            {
+                return BadRequest(Login.Message);
+            }
+
+            return Ok(Login.Message);
         }
     }
 }

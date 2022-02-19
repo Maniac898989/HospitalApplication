@@ -9,7 +9,7 @@ namespace ProjectHealth.Logic.Auth
 {
     public interface IAuthLogic
     {
-        Task<Result> Register(Login loginObject);
-        Task<Result> Login(Login loginObject);
+        Task<Result> Register(Registration loginObject);
+        Task<Result> Login(Login login);
     }
 }
